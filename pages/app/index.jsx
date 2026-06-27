@@ -20,11 +20,10 @@ const App = () => {
   const [href, setHref] = useState("");
   const [file, setFile] = useState();
   const [fileList, setFileList] = useState([]);
-  const [name, setName] = useState("input.mp4");
-  const [output, setOutput] = useState("output.mp4");
-  const [downloadFileName, setDownloadFileName] = useState("output.mp4");
+  const [name, setName] = useState("gurt.png");
+  const [output, setOutput] = useState("congurted.png");
+  const [downloadFileName, setDownloadFileName] = useState("congurted.png");
   const ffmpeg = useRef();
-  const currentFSls = useRef([]);
 
   const handleExec = async () => {
     if (!file) {
@@ -43,50 +42,49 @@ const App = () => {
           await fetchFile(fileItem)
         );
       }
-      currentFSls.current = ffmpeg.current.FS("readdir", ".");
+      const stencilName = "gurtstencil.png";
+      try {
+        const stencilResp = await fetch('/static/gurtstencil.png');
+        if (stencilResp.ok) {
+          const stencilBuf = new Uint8Array(await stencilResp.arrayBuffer());
+          ffmpeg.current.FS('writeFile', stencilName, stencilBuf);
+        }
+      } catch (e) {
+        console.warn('failed to fetch gurtstencil.png', e);
+      }
       setTip("start executing the command");
-      await ffmpeg.current.run(
-        ...inputOptions.split(" "),
-        name,
-        ...outputOptions.split(" "),
-        output
-      );
-      setSpinning(false);
-      const FSls = ffmpeg.current.FS("readdir", ".");
-      const outputFiles = FSls.filter((i) => !currentFSls.current.includes(i));
-      if (outputFiles.length === 1) {
-        const data = ffmpeg.current.FS("readFile", outputFiles[0]);
-        const type = await fileTypeFromBuffer(data.buffer);
+      const ext = name.split('.').pop().toLowerCase();
+      const isGif = ext === 'gif';
 
-        const objectURL = URL.createObjectURL(
-          new Blob([data.buffer], { type: type.mime })
-        );
-        setHref(objectURL);
-        setDownloadFileName(outputFiles[0]);
-        message.success(
-          "Run successfully, click the download button to download the output file",
-          10
-        );
-      } else if (outputFiles.length > 1) {
-        var zip = new JSZip();
-        outputFiles.forEach((filleName) => {
-          const data = ffmpeg.current.FS("readFile", filleName);
-          zip.file(filleName, data);
-        });
-        const zipFile = await zip.generateAsync({ type: "blob" });
-        const objectURL = URL.createObjectURL(zipFile);
-        setHref(objectURL);
-        setDownloadFileName("output.zip");
-        message.success(
-          "Run successfully, click the download button to download the output file",
-          10
+      const args = ["-i", name, "-i", stencilName];
+      if (isGif) {
+        args.push(
+          "-filter_complex",
+          "[0:v]scale=231:227[scaled];[scaled][1:v]overlay=0:0,split[s0][s1];[s0]palettegen=stats_mode=full[p];[s1][p]paletteuse"
         );
       } else {
-        message.success(
-          "Run successfully, No files are generated, if you want to see the output of the ffmpeg command, please open the console",
-          10
+        args.push(
+          "-filter_complex",
+          "[0:v]scale=231:227[scaled];[scaled][1:v]overlay=0:0"
         );
+        if (ext === 'webp') {
+          args.push("-loop", "0");
+        }
       }
+      args.push(output, "-y");
+      await ffmpeg.current.run(...args);
+      setSpinning(false);
+      const data = ffmpeg.current.FS("readFile", output);
+      const type = await fileTypeFromBuffer(data.buffer);
+      const objectURL = URL.createObjectURL(
+        new Blob([data.buffer], { type: type.mime })
+      );
+      setHref(objectURL);
+      setDownloadFileName(output);
+      message.success(
+        "Ran successfully, click the download button to download the output file",
+        10
+      );
     } catch (err) {
       console.error(err);
       message.error(
@@ -187,6 +185,9 @@ const App = () => {
           setFile(file);
           setFileList((v) => [...v, ...fileList]);
           setName(file.name);
+          const ext = file.name.split('.').pop().toLowerCase();
+          setOutput(`congurted.${ext}`);
+          setDownloadFileName(`congurted.${ext}`);
           return false;
         }}
       >
@@ -219,7 +220,7 @@ const App = () => {
           onChange={(event) => setOutput(event.target.value)}
         />
         <div className="command-text">
-          ffmpeg {inputOptions} {name} {outputOptions} {output}
+          ffmpeg -i &quot;{name}&quot; -i gurtstencil.png -filter_complex &quot;[0:v]scale=231:227[scaled];[scaled][1:v]overlay=0:0&quot; {output} -y
         </div>
       </div>
       <h4>3. Run and get the output file</h4>
