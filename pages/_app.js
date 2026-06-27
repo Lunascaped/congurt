@@ -5,7 +5,7 @@ import Script from "next/script";
 function MyApp({ Component, pageProps }) {
   return (
     <>
-      <Script src="/static/coi-serviceworker.min.js" strategy="beforeInteractive" />
+      <Script src="/congurt/static/coi-serviceworker.min.js" strategy="beforeInteractive" />
       <Script
         strategy="lazyOnload"
         src={`https://www.googletagmanager.com/gtag/js?id=G-M4JFD2DM29`}

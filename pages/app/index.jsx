@@ -44,7 +44,7 @@ const App = () => {
       }
       const stencilName = "gurtstencil.png";
       try {
-        const stencilResp = await fetch('/static/gurtstencil.png');
+        const stencilResp = await fetch('/congurt/static/gurtstencil.png');
         if (stencilResp.ok) {
           const stencilBuf = new Uint8Array(await stencilResp.arrayBuffer());
           ffmpeg.current.FS('writeFile', stencilName, stencilBuf);
