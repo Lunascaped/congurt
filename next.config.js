@@ -3,7 +3,7 @@ const webpack = require("webpack");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
-  basePath: "/ffmpeg-online",
+  basePath: "/congurt",
   images: {
     unoptimized: true,
   },
