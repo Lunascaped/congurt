@@ -2,6 +2,11 @@ const webpack = require("webpack");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "export",
+  basePath: "/ffmpeg-online",
+  images: {
+    unoptimized: true,
+  },
   reactStrictMode: true,
   webpack: (config) => {
     config.plugins.push(
